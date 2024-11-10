@@ -1,0 +1,37 @@
+{
+  "configurations" : [
+    {
+      "id" : "EC456FBB-B1C1-4513-B3E5-8C92AAF4FED6",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:MaruthiGymTrainerApp.xcodeproj",
+      "identifier" : "FC13EA2D2CCBC84C0098D86F",
+      "name" : "MaruthiGymTrainerApp"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:MaruthiGymTrainerApp.xcodeproj",
+        "identifier" : "FC13EA402CCBC84E0098D86F",
+        "name" : "MaruthiGymTrainerAppTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:MaruthiGymTrainerApp.xcodeproj",
+        "identifier" : "FC13EA4A2CCBC84E0098D86F",
+        "name" : "MaruthiGymTrainerAppUITests"
+      }
+    }
+  ],
+  "version" : 1
+}
