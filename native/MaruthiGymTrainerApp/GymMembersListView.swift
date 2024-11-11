@@ -13,6 +13,7 @@ struct GymMembersListView: View {
     
     @Query private var members: [GymMember]
     @State var isAddMemberViewPresent:Bool = false
+    
     var body: some View {
         NavigationStack {
                 List {
@@ -36,7 +37,7 @@ struct GymMembersListView: View {
         }
        
         .sheet(isPresented: $isAddMemberViewPresent) {
-            GymMemberAddView().accessibilityIdentifier("GymMemberAddView")
+            GymMemberAddView(config: GymMemberAddViewConfig()).accessibilityIdentifier("GymMemberAddView")
         }
         
     }
@@ -50,7 +51,7 @@ struct GymMemberRow:View {
     var member:GymMember
     
     var body: some View {
-        NavigationLink(destination:GymMemberDetailView(member: member) ) {
+        NavigationLink(destination:GymMemberDetailView(gymMember: member) ) {
             VStack {
                 ZStack{
                     VStack {

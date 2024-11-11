@@ -15,10 +15,17 @@ import Combine
 struct GymMemberAddView:View {
 
     @Environment(\.modelContext) private var modelContext
-    @StateObject var viewModel:ViewModel = ViewModel()
+    
+    @ObservedObject var viewModel:GymMemberAddViewConfig
+    
     @Environment(\.dismiss) var dismiss
+    
     @State var isPhotoPickerPresent = false
    
+    init(config:GymMemberAddViewConfig)
+    {
+        self.viewModel = config
+    }
         var body: some View {
             NavigationStack {
                 Form {
@@ -146,13 +153,13 @@ extension GymMemberAddView {
     
     struct GymMemberAddImageView:View {
         
-        @EnvironmentObject var viewModel:ViewModel
+        @EnvironmentObject var viewModel:GymMemberAddViewConfig
         
         var body: some View {
             
             HStack {
                 VStack {
-                    GymMemberImageView.init(baseSize: .init(width: 50, height: 50))
+                    GymMemberImageView.init(image: viewModel.selectedImage, baseSize: .init(width: 50, height: 50))
 
                     Text("Change Photo")
                         .fontWeight(.medium)
@@ -171,110 +178,135 @@ extension GymMemberAddView {
 }
 
 
-extension GymMemberAddView {
-    
-    /// After iOS 17 @observable property macro  is enough
-    
-    class ViewModel: ObservableObject {
-        
-//        @Published var editGymMember:GymMember?
-        
-        @Published  var name: String = ""
-        @Published var joiningDate: Date = Date()
-        @Published var selectedPackage: GymPackage = .standard
-        @Published var selectedFeesTenure:FeesTenure = .monthly
-        @Published var nameNumberOfCharacters:Int = 30
-        @Published var selectedImage:UIImage?
-        @Published var selectedPhotoItem: PhotosPickerItem? // PhotosPicker selection
-        
-        
-        private var cancellables = Set<AnyCancellable>()
 
-        var estimatedPriceString:String {
-            
-            return GymPricingHandler.init(package: selectedPackage, feesTenure: selectedFeesTenure).calculatedFeesString
-            
-        }
+/// After iOS 17 @observable property macro  is enough
+
+class GymMemberAddViewConfig: ObservableObject {
+    
+//        @Published var editGymMember:GymMember?
+    
+    @Published var name: String = ""
+    @Published var joiningDate: Date = Date()
+    @Published var selectedPackage: GymPackage = .standard
+    @Published var selectedFeesTenure:FeesTenure = .monthly
+  
+     var nameNumberOfCharacters:Int = 30
+    @Published var selectedImage:UIImage?
+    @Published var selectedPhotoItem: PhotosPickerItem? // PhotosPicker selection
+    
+    @Published private var editMember:GymMember?
+    
+    
+    private var cancellables = Set<AnyCancellable>()
+
+    var estimatedPriceString:String {
         
+        return GymPricingHandler.init(package: selectedPackage, feesTenure: selectedFeesTenure).calculatedFeesString
         
-        init() {
-            // Listen selectedPhotoItem value and update selectedImage value using combine
+    }
+    
+    
+    init(gymMember:GymMember?) {
+        
+        self.editMember = gymMember
+        mandatorySink()
+       
+    }
+
+    
+    init() {
+        mandatorySink()
+        
+    }
+    
+    func mandatorySink() {
+        // Listen selectedPhotoItem value and update selectedImage value using combine
+        
+        $selectedPhotoItem
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] newValue in
             
-            $selectedPhotoItem
-                .receive(on: DispatchQueue.main)
-                .sink { [weak self] newValue in
-                
-                Task {
-                    if let data = try? await newValue?.loadTransferable(type: Data.self),
-                       let image = UIImage(data: data) {
-                        DispatchQueue.main.async { [weak self ] in
-                            self?.selectedImage = image
-                        }
-                       
+            Task {
+                if let data = try? await newValue?.loadTransferable(type: Data.self),
+                   let image = UIImage(data: data) {
+                    DispatchQueue.main.async { [weak self ] in
+                        self?.selectedImage = image
                     }
+                   
                 }
             }
-            .store(in: &cancellables)
-//            
-//            $editGymMember
-//                .sink { [weak self] member in
-//                    guard let editGymMember  = member else {
-//                        return
-//                    }
-//                    self?.editGymMember = editGymMember
-//                    self?.name = editGymMember.name
-//                    self?.joiningDate = editGymMember.joiningDate
-//                    self?.selectedPackage = editGymMember.packageType
-//                    self?.selectedFeesTenure = editGymMember.feesTenureType
-//                    self?.selectedImage = editGymMember.gymMemberImage
-//                }
-//                .store(in: &cancellables)
-            
         }
-        
-        func addGymMember(context:ModelContext) {
-            let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        .store(in: &cancellables)
+
+        $editMember
+                .sink { [weak self] member in
+                    guard let editGymMember  = member else {
+                        return
+                    }
+                    self?.name = editGymMember.name
+                    self?.joiningDate = editGymMember.joiningDate
+                    self?.selectedPackage = editGymMember.packageType
+                    self?.selectedFeesTenure = editGymMember.feesTenureType
+                    self?.selectedImage = editGymMember.gymMemberImage
+                }
+                .store(in: &cancellables)
+    }
+    
+    func addGymMember(context:ModelContext) {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let editMemberObject =  editMember {
+            editMemberObject.name = trimmedName
+            editMemberObject.joiningDate = joiningDate
+            editMemberObject.packageType = selectedPackage
+            editMemberObject.feesTenureType = selectedFeesTenure
+            editMemberObject.imageData = selectedImage?.pngData()
+            context.insert(editMemberObject)
+            try? context.save()
+            
+        } else {
             if  let gymMember = try? GymMember(id: UUID(), name: trimmedName, joiningDate: joiningDate, packageType: selectedPackage, feesTenureType: selectedFeesTenure) {
                 gymMember.imageData = selectedImage?.pngData()
                 context.insert(gymMember)
                 try? context.save()
             }
-            
-        }
-    
-        
-        var isValidNameInputs:Bool {
-            
-          
-            
-            var isNameRegexValid: Bool {
-                let nameRegex = "^[A-Za-z\\s]+$" // Regex for alphabetic characters and spaces
-                let namePredicate = NSPredicate(format: "SELF MATCHES %@", nameRegex)
-                return  namePredicate.evaluate(with: name)
-            }
-            
-            var isNameExceededLimit:Bool {
-                
-                return (name.count > nameNumberOfCharacters)
-            }
-            // Unlike Done button error message should not shown for empty name.
-            // Error message should show only for character limit exceeded and regex format unmaching like numbers and special characters should not allowed
-            return  (!isNameExceededLimit && isNameRegexValid) || name.isEmpty
-            
         }
         
-        var isDoneButtonEnabled:Bool {
-            // Done button should not enable when empty and incorrect name format.
-            // So checking name and invalid regex format. if anyone false restricting done button
-            // Trimmed version of name to avoid whitespace issues at the beginning and end
-               let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-            
-            return !trimmedName.isEmpty && isValidNameInputs
-            
-        }
+       
         
-        
-    
     }
     
+    
+    var isValidNameInputs:Bool {
+        
+      
+        
+        var isNameRegexValid: Bool {
+            let nameRegex = "^[A-Za-z\\s]+$" // Regex for alphabetic characters and spaces
+            let namePredicate = NSPredicate(format: "SELF MATCHES %@", nameRegex)
+            return  namePredicate.evaluate(with: name)
+        }
+        
+        var isNameExceededLimit:Bool {
+            
+            return (name.count > nameNumberOfCharacters)
+        }
+        // Unlike Done button error message should not shown for empty name.
+        // Error message should show only for character limit exceeded and regex format unmaching like numbers and special characters should not allowed
+        return  (!isNameExceededLimit && isNameRegexValid) || name.isEmpty
+        
+    }
+    
+    var isDoneButtonEnabled:Bool {
+        // Done button should not enable when empty and incorrect name format.
+        // So checking name and invalid regex format. if anyone false restricting done button
+        // Trimmed version of name to avoid whitespace issues at the beginning and end
+           let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        return !trimmedName.isEmpty && isValidNameInputs
+        
+    }
+    
+    
+
 }

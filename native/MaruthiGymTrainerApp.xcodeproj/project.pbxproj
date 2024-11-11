@@ -111,8 +111,8 @@
 		FC13EA302CCBC84C0098D86F /* MaruthiGymTrainerApp */ = {
 			isa = PBXGroup;
 			children = (
-				FC13EA312CCBC84C0098D86F /* MaruthiGymTrainerApp.swift */,
 				FC2063182CE0F64D00F3182E /* GymAppTheme.swift */,
+				FC13EA312CCBC84C0098D86F /* MaruthiGymTrainerApp.swift */,
 				FC13EA332CCBC84C0098D86F /* ContentView.swift */,
 				FCBA08872CCBF8E300C59B46 /* GymMembersListView.swift */,
 				FC2063162CDFA50000F3182E /* GymMemberDetailView.swift */,

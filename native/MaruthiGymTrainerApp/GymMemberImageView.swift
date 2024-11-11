@@ -9,7 +9,7 @@ import SwiftUI
 
 struct GymMemberImageView:View {
     
-    @Binding var image:UIImage?
+    var image:UIImage?
     var baseSize:CGSize
     
     private var imageSize:CGSize {

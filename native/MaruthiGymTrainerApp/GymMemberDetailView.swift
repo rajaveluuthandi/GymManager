@@ -7,50 +7,35 @@
 import SwiftUI
 import SwiftData
 
-extension GymMemberDetailView {
-    @Observable
-    class ViewModel:ObservableObject {
-         var member:GymMember
-
-        init(member:GymMember) {
-            self.member = member
-        }
-        func deleteGymMember(context:ModelContext,gymMember:GymMember) {
-            
-            context.delete(gymMember)
-            try? context.save()
-        }
-        
-    }
-    
-}
-
 struct GymMemberDetailView:View {
    
     @Environment(\.modelContext) var modelContext
-    @ObservedObject var viewModel:ViewModel
+//    @ObservedObject var viewModel:GymMemberAddViewConfig
     
     @Environment(\.dismiss) var dismiss
+   
     @State var showDeleteAlert:Bool =  false
     @State var showEditScreen:Bool =  false
     
+     var  gymMember:GymMember
     
-   init(gymMember:GymMember) {
-       viewModel = ViewModel.init(member: gymMember)
+    
+    init( gymMember: GymMember) {
+        self.gymMember = gymMember
     }
     var body: some View {
         ScrollView{
             VStack {
                
-                GymMemberImageView.init(image: $viewModel.member.gymMemberImage , baseSize: .init(width: 100, height: 100))
+                GymMemberImageView.init(image: gymMember.gymMemberImage , baseSize: .init(width: 100, height: 100))
                 
-                GymMemberDetailRow(title: "Name", value: $viewModel.member.name)
+                GymMemberDetailRow(title: "Name", value: gymMember.name)
                
-                GymMemberDetailRow(title: "Join Date", value:  $viewModel.member.joinDateString )
+                GymMemberDetailRow(title: "Join Date", value:  gymMember.joinDateString )
                 
-                GymMemberDetailRow(title: "Package", value:  $viewModel.member.packageType.title )
+                GymMemberDetailRow(title: "Package", value:  gymMember.packageType.title )
                 
-                GymMemberDetailRow(title: "Subscription Type", value:  $viewModel.member.feesTenureType.title )
+                GymMemberDetailRow(title: "Subscription Type", value:  gymMember.feesTenureType.title )
 
                 
             }
@@ -72,7 +57,7 @@ struct GymMemberDetailView:View {
             }
             
             Button("Yes", role: .destructive) {
-                viewModel.deleteGymMember(context: modelContext, gymMember: member)
+//                viewModel.deleteGymMember(context: modelContext, gymMember: viewModel.member)
                 dismiss()
             }
             
@@ -81,7 +66,7 @@ struct GymMemberDetailView:View {
             Text("Do you want to delete this gym member?")
         }
         .sheet(isPresented: $showEditScreen) {
-            GymMemberAddView()
+            GymMemberAddView(config: GymMemberAddViewConfig(gymMember: gymMember))
         }
 
     }
@@ -89,8 +74,8 @@ struct GymMemberDetailView:View {
 
 struct GymMemberDetailRow:View {
     
-    @State var title:String
-    @State var value:String
+     var title:String
+     var value:String
    
     var body: some View {
         VStack {

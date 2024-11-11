@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-
+    
     var body: some View {
         TabView {
             GymMembersListView()
@@ -18,7 +18,7 @@ struct ContentView: View {
                     Text("Gym Members")
                     Image(systemName: "dumbbell.fill")
                 }
-                
+            
             Text("Plans")
                 .tabItem {
                     Text("Plans")
@@ -39,8 +39,9 @@ struct ContentView: View {
                     Text("More")
                     Image(systemName: "square.grid.3x3")
                 }
-
+            
         }
         .tint(GymAppTheme.universalThemeColor)
         
     }
+}
